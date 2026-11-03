@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entrenador infinito de batería · 4/4</title>
+<style>
+:root{color-scheme:light;--ink:#192a39;--muted:#5c6b7b;--line:#dce4eb;--blue:#287fb2;--green:#268c72;--orange:#db913d;--bg:#f4f7fa;--cell:#f0f4f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+.wrap{max-width:1000px;margin:auto;padding:20px 14px 32px}
+h1{font-size:clamp(22px,4vw,30px);letter-spacing:-.035em;margin:0 0 6px}p{line-height:1.5}.intro{color:var(--muted);margin:0 0 17px}
+.panel{border:1px solid var(--line);border-radius:17px;background:white;padding:16px;margin-bottom:15px;box-shadow:0 1px 4px #20304008}
+.controls{display:flex;gap:14px;align-items:end;flex-wrap:wrap}.group{display:flex;flex-direction:column;gap:6px;min-width:142px;flex:1}.group label{font-weight:650;font-size:13px}.group output{font-weight:800;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer}select{font:inherit;padding:10px 12px;border:1px solid #bfcbd6;border-radius:10px;background:#fff;color:var(--ink);width:100%}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{cursor:pointer;border:1px solid #c7d3df;background:#fff;border-radius:11px;padding:11px 15px;font-size:14px;font-weight:700;color:var(--ink)}.btn:hover{filter:brightness(.97)}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);min-width:125px}.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #82bfe9;outline-offset:2px}
+.toggles{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding-top:12px;color:var(--muted);font-size:13px}.toggles label{display:flex;gap:7px;align-items:center;cursor:pointer}.toggles input{accent-color:var(--blue)}
+.status{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.status strong{font-size:17px}.status small{font-weight:550;color:var(--muted)}.live{width:8px;height:8px;background:#a9b7c5;display:inline-block;border-radius:50%;margin-right:8px}.live.on{background:#25a782;box-shadow:0 0 0 4px #25a78220}
+.bars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.bar{border:1px solid var(--line);border-radius:13px;padding:13px 10px;background:#fff;min-width:0;transition:border-color .12s,background .12s}.bar.current{border:2px solid var(--blue);padding:12px 9px;background:#f7fbff}.bar.topnext{opacity:.9}
+.barhead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.barhead strong{font-size:14px}.barhead span{font-size:11px;color:#667b8d;font-weight:650}.bar.current .barhead span{color:var(--blue)}
+.rhythm{display:grid;grid-template-columns:53px repeat(8,minmax(0,1fr));gap:3px;align-items:center}.rhythm .name{font-size:11px;font-weight:700;color:var(--muted)}.slot{height:27px;min-width:0;display:flex;align-items:center;justify-content:center;background:var(--cell);border-radius:5px;font-size:16px;font-weight:800}.beat{height:21px;background:transparent;color:var(--muted);font-size:11px}.slot.now{background:#ffedb9!important;color:#7d4800;box-shadow:inset 0 0 0 1px #eecc78}.slot.hi{color:var(--blue)}.slot.sn{color:var(--green)}.slot.ki{color:#bc7031}.slot.empty{color:#b0beca;font-weight:400}.bar-note{font-size:11px;margin:9px 0 0;color:#697b8d}
+.legend{display:flex;gap:15px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:12px}.legend b{font-size:15px}.instructions{font-size:14px;color:var(--muted);line-height:1.55}.instructions strong{color:var(--ink)}
+@media(max-width:650px){.bars{grid-template-columns:1fr}.wrap{padding:10px}.bar{padding:10px 8px}.bar.current{padding:9px 7px}.rhythm{grid-template-columns:50px repeat(8,minmax(0,1fr));gap:2px}.slot{height:29px}.group{min-width:130px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="trainer">
+  <h1>🥁 Entrenador infinito de coordinación</h1>
+  <p class="intro">Hi-hat en corcheas constantes; bombo y caja varían. Lee el compás activo y anticipa el siguiente.</p>
+  <section class="panel">
+    <div class="controls">
+      <div class="group"><label for="bpm">Velocidad: <output id="bpmLabel">60 BPM</output></label><input id="bpm" type="range" min="35" max="150" value="60" step="5"></div>
+      <div class="group"><label for="level">Nivel</label><select id="level"><option value="1">1 · Básico</option><option value="2" selected>2 · Variaciones</option><option value="3">3 · Síncopas</option></select></div>
+    </div>
+    <div class="btnrow"><button class="btn primary" id="play" type="button">▶ Reproducir</button><button class="btn" id="restart" type="button">↺ Reiniciar</button><button class="btn" id="new" type="button">⤨ Nuevos ritmos</button></div>
+    <div class="toggles"><label><input type="checkbox" id="sound" checked> Sonido de batería</label><label><input type="checkbox" id="click" checked> Clic del metrónomo</label></div>
+  </section>
+  <section class="panel" aria-label="Partituras en reproducción">
+    <div class="status"><strong><span class="live" id="live"></span><span id="statustext">Preparado para empezar</span></strong><small id="count">Compás 1 · 4/4</small></div>
+    <div id="bars" class="bars" aria-live="off"></div>
+    <div class="legend"><span><b style="color:var(--blue)">×</b> Hi-hat</span><span><b style="color:var(--green)">●</b> Caja</span><span><b style="color:#bc7031">●</b> Bombo</span><span><b style="color:#a7b5c1">·</b> Silencio</span><span>Columna amarilla = nota actual</span></div>
+  </section>
+  <section class="panel instructions"><strong>Cómo practicar:</strong> empieza a 60 BPM y sigue los ocho pasos del compás (<strong>1 y 2 y 3 y 4 y</strong>). El charles toca en todos. Si bombo o caja coinciden en la misma columna, golpea ambos a la vez. El patrón sigue generando compases indefinidamente. El nivel 1 conserva la caja en 2 y 4, el nivel 2 añade desplazamientos de bombo y el 3 introduce más síncopas. Escucha el audio como guía y, cuando lo domines, puedes desactivar el sonido de batería y mantener solo el clic.</section>
+</div>
+<script>
+(function(){
+'use strict';
+const root=document.getElementById('trainer');
+if(!root)return;
+const $=id=>root.querySelector('#'+id);
+const steps=['1','y','2','y','3','y','4','y'];
+const elBars=$('bars'), playBtn=$('play'), levelEl=$('level'), bpmEl=$('bpm');
+let bars=[],running=false,ctx=null,timer=null,raf=null,scheduled=[],nextStep=0,nextTime=0,currentStep=-1,firstTime=true,noise=null;
+function rng(p){return Math.random()<p;}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function createBar(num){
+ const level=+levelEl.value;
+ let kick=[0,4],snare=[2,6];
+ if(level===1){kick=pick([[0,4],[0],[0,4,5],[0,3,4],[0,4,7],[0,2,4]]) .slice();snare=[2,6];}
+ if(level===2){kick=pick([[0,4],[0,3,4],[0,4,7],[0,4,5],[0,2,4,7],[0,3,4,7],[0,4,5,7],[0,2,4,5]]) .slice();snare=pick([[2,6],[2,6],[2,6,7],[2,5,6],[2,6]]) .slice();}
+ if(level===3){kick=[0];[1,2,3,4,5,6,7].forEach(s=>{if(rng(s%2===0?.37:.29))kick.push(s)});snare=pick([[2,6],[2,5,6],[2,6,7],[2,3,6],[3,6],[2,7],[2,4,6]]) .slice();}
+ if(num%4===3 && level<=2){kick=[0,4];snare=[2,6];}
+ return {kick:[...new Set(kick)].sort((a,b)=>a-b),snare:[...new Set(snare)].sort((a,b)=>a-b)};
+}
+function ensureBar(num){while(bars.length<=num){let b=createBar(bars.length);let tries=0;const prev=bars[bars.length-1];while(prev&&tries<8&&JSON.stringify(b)===JSON.stringify(prev)){b=createBar(bars.length);tries++}bars.push(b);}if(bars.length>num+24){/* preserve future queue; bars are tiny */}}
+function draw(){
+ const activeBar=Math.max(0,Math.floor(currentStep/8));
+ ensureBar(activeBar+3);
+ let out='';
+ for(let j=activeBar;j<activeBar+4;j++){
+  const p=bars[j],active=j===activeBar;
+  const cls=active?'bar current':'bar topnext';
+  out+=`<div class="${cls}"><div class="barhead"><strong>Compás ${j+1}</strong><span>${active?(running?'● AHORA':'ACTUAL'):j===activeBar+1?'SIGUIENTE':'PRÓXIMO'}</span></div><div class="rhythm">`;
+  out+='<div class="name">Cuenta</div>';
+  for(let s=0;s<8;s++)out+=`<div class="slot beat ${active&&currentStep%8===s&&currentStep>=0?'now':''}">${steps[s]}</div>`;
+  for(const row of [{name:'Charles',hits:[0,1,2,3,4,5,6,7],type:'hi',sym:'×'},{name:'Caja',hits:p.snare,type:'sn',sym:'●'},{name:'Bombo',hits:p.kick,type:'ki',sym:'●'}]){
+   out+=`<div class="name">${row.name}</div>`;
+   for(let s=0;s<8;s++){
+    const hit=row.hits.includes(s);
+    out+=`<div class="slot ${hit?row.type:'empty'} ${active&&currentStep>=0&&currentStep%8===s?'now':''}">${hit?row.sym:'·'}</div>`;
+   }
+  }
+  out+='</div></div>';
+ }
+ elBars.innerHTML=out;
+ $('count').textContent=`Compás ${activeBar+1} · ${currentStep<0?'Inicio':steps[currentStep%8]} · 4/4`;
+ $('statustext').textContent=running?'Reproduciendo sin límite':currentStep>=0?'Pausado':'Preparado para empezar';
+ $('live').classList.toggle('on',running);
+ playBtn.textContent=running?'❚❚ Pausar':currentStep>=0?'▶ Continuar':'▶ Reproducir';
+}
+function getNow(){return ctx?ctx.currentTime:performance.now()/1000;}
+function makeNoise(){if(!ctx)return;noise=ctx.createBuffer(1,ctx.sampleRate*.5|0,ctx.sampleRate);const a=noise.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;}
+function hat(t,accent){const src=ctx.createBufferSource();src.buffer=noise;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=6500;const g=ctx.createGain();g.gain.setValueAtTime(accent?.095:.056,t);g.gain.exponentialRampToValueAtTime(.0001,t+.065);src.connect(hp);hp.connect(g);g.connect(ctx.destination);src.start(t);src.stop(t+.07);}
+function snare(t){const src=ctx.createBufferSource();src.buffer=noise;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1300;const g=ctx.createGain();g.gain.setValueAtTime(.24,t);g.gain.exponentialRampToValueAtTime(.0001,t+.15);src.connect(hp);hp.connect(g);g.connect(ctx.destination);src.start(t);src.stop(t+.16);const o=ctx.createOscillator(),og=ctx.createGain();o.type='triangle';o.frequency.value=175;og.gain.setValueAtTime(.15,t);og.gain.exponentialRampToValueAtTime(.0001,t+.095);o.connect(og);og.connect(ctx.destination);o.start(t);o.stop(t+.1);}
+function kick(t){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(155,t);o.frequency.exponentialRampToValueAtTime(49,t+.105);g.gain.setValueAtTime(.65,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.21);}
+function click(t,accent){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(accent?1100:850,t);g.gain.setValueAtTime(accent?.12:.075,t);g.gain.exponentialRampToValueAtTime(.0001,t+.04);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.05);}
+function schedule(){
+ if(!running)return;
+ const now=getNow();
+ while(nextTime<now+.11){
+  const abs=nextStep++,bar=Math.floor(abs/8),s=abs%8;
+  ensureBar(bar+3);
+  const p=bars[bar];
+  if(ctx){try{if($('sound').checked){hat(nextTime,s%2===0);if(p.kick.includes(s))kick(nextTime);if(p.snare.includes(s))snare(nextTime);}if($('click').checked&&s%2===0)click(nextTime,s===0);}catch(e){/* visual playback survives audio failures */}}
+  scheduled.push({at:nextTime,abs});
+  nextTime+=30/+bpmEl.value;
+ }
+}
+function animate(){if(!running)return;const now=getNow();let changed=false;while(scheduled.length&&scheduled[0].at<=now+.006){currentStep=scheduled.shift().abs;changed=true;}if(changed)draw();raf=requestAnimationFrame(animate);}
+async function toggle(){
+ if(running){pause();return;}
+ if(!ctx){try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){ctx=new AC();makeNoise();}}catch(e){ctx=null;}}
+ if(ctx&&ctx.state==='suspended'){try{await ctx.resume();}catch(e){ctx=null;}}
+ running=true;nextStep=Math.max(0,currentStep+1);nextTime=getNow()+.11;scheduled=[];timer=setInterval(schedule,22);schedule();raf=requestAnimationFrame(animate);draw();
+}
+function pause(){running=false;clearInterval(timer);cancelAnimationFrame(raf);scheduled=[];draw();}
+function reset(auto){if(running)pause();bars=[];currentStep=-1;nextStep=0;ensureBar(3);draw();if(auto)toggle();}
+playBtn.addEventListener('click',toggle);
+$('restart').addEventListener('click',()=>reset(false));
+$('new').addEventListener('click',()=>reset(running));
+levelEl.addEventListener('change',()=>reset(running));
+bpmEl.addEventListener('input',()=>{$('bpmLabel').textContent=bpmEl.value+' BPM'});
+ensureBar(3);draw();
+window.addEventListener('pagehide',()=>{if(running)pause();if(ctx)ctx.close().catch(()=>{});});
+})();
+</script>
+</body>
+</html>
